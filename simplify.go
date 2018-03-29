@@ -1,10 +1,14 @@
 package simplify
 
-import "container/heap"
+import (
+	"container/heap"
+
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 func Simplify(input *Mesh, factor float64) *Mesh {
 	// find distinct vertices
-	vectorVertex := make(map[Vector]*Vertex)
+	vectorVertex := make(map[mgl64.Vec3]*Vertex)
 	for _, t := range input.Triangles {
 		vectorVertex[t.V1] = NewVertex(t.V1)
 		vectorVertex[t.V2] = NewVertex(t.V2)
@@ -139,7 +143,7 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 		// update pairs and prune current pair
 		delete(vertexPairs, p.A)
 		delete(vertexPairs, p.B)
-		seen := make(map[Vector]bool)
+		seen := make(map[mgl64.Vec3]bool)
 		for q := range distinctPairs {
 			q.Removed = true
 			heap.Remove(&queue, q.Index)
@@ -154,11 +158,11 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 				// swap so that a == v
 				a, b = b, a
 			}
-			if _, ok := seen[b.Vector]; ok {
+			if _, ok := seen[b.Vec3]; ok {
 				// only want distinct neighbors
 				continue
 			}
-			seen[b.Vector] = true
+			seen[b.Vec3] = true
 			q = NewPair(a, b)
 			heap.Push(&queue, q)
 			vertexPairs[a] = append(vertexPairs[a], q)
@@ -180,7 +184,7 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	triangles := make([]*Triangle, len(distinctFaces))
 	i := 0
 	for f := range distinctFaces {
-		triangles[i] = NewTriangle(f.V1.Vector, f.V2.Vector, f.V3.Vector)
+		triangles[i] = NewTriangle(f.V1.Vec3, f.V2.Vec3, f.V3.Vec3)
 		i++
 	}
 	return NewMesh(triangles)

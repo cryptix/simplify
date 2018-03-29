@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"os"
 	"strings"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 type STLHeader struct {
@@ -34,9 +36,9 @@ func LoadBinarySTL(path string) (*Mesh, error) {
 		if err := binary.Read(file, binary.LittleEndian, &d); err != nil {
 			return nil, err
 		}
-		v1 := Vector{float64(d.V1[0]), float64(d.V1[1]), float64(d.V1[2])}
-		v2 := Vector{float64(d.V2[0]), float64(d.V2[1]), float64(d.V2[2])}
-		v3 := Vector{float64(d.V3[0]), float64(d.V3[1]), float64(d.V3[2])}
+		v1 := mgl64.Vec3{float64(d.V1[0]), float64(d.V1[1]), float64(d.V1[2])}
+		v2 := mgl64.Vec3{float64(d.V2[0]), float64(d.V2[1]), float64(d.V2[2])}
+		v3 := mgl64.Vec3{float64(d.V3[0]), float64(d.V3[1]), float64(d.V3[2])}
 		triangles[i] = NewTriangle(v1, v2, v3)
 	}
 	return NewMesh(triangles), nil
@@ -56,18 +58,18 @@ func SaveBinarySTL(path string, mesh *Mesh) error {
 	for _, triangle := range mesh.Triangles {
 		n := triangle.Normal()
 		d := STLTriangle{}
-		d.N[0] = float32(n.X)
-		d.N[1] = float32(n.Y)
-		d.N[2] = float32(n.Z)
-		d.V1[0] = float32(triangle.V1.X)
-		d.V1[1] = float32(triangle.V1.Y)
-		d.V1[2] = float32(triangle.V1.Z)
-		d.V2[0] = float32(triangle.V2.X)
-		d.V2[1] = float32(triangle.V2.Y)
-		d.V2[2] = float32(triangle.V2.Z)
-		d.V3[0] = float32(triangle.V3.X)
-		d.V3[1] = float32(triangle.V3.Y)
-		d.V3[2] = float32(triangle.V3.Z)
+		d.N[0] = float32(n.X())
+		d.N[1] = float32(n.Y())
+		d.N[2] = float32(n.Z())
+		d.V1[0] = float32(triangle.V1.X())
+		d.V1[1] = float32(triangle.V1.Y())
+		d.V1[2] = float32(triangle.V1.Z())
+		d.V2[0] = float32(triangle.V2.X())
+		d.V2[1] = float32(triangle.V2.Y())
+		d.V2[2] = float32(triangle.V2.Z())
+		d.V3[0] = float32(triangle.V3.X())
+		d.V3[1] = float32(triangle.V3.Y())
+		d.V3[2] = float32(triangle.V3.Z())
 		if err := binary.Write(file, binary.LittleEndian, &d); err != nil {
 			return err
 		}
@@ -81,14 +83,14 @@ func LoadSTL(path string) (*Mesh, error) {
 		return nil, err
 	}
 	defer file.Close()
-	var vertexes []Vector
+	var vertexes []mgl64.Vec3
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
 		if len(fields) == 4 && fields[0] == "vertex" {
 			f := parseFloats(fields[1:])
-			v := Vector{f[0], f[1], f[2]}
+			v := mgl64.Vec3{f[0], f[1], f[2]}
 			vertexes = append(vertexes, v)
 		}
 	}
