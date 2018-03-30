@@ -1,15 +1,17 @@
 package simplify
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/cryptix/stl"
+	"github.com/go-gl/mathgl/mgl64"
+)
 
-type Triangle struct {
-	V1, V2, V3 mgl64.Vec3
+func NewTriangle(v1, v2, v3 mgl64.Vec3) stl.Triangle {
+	t := stl.Triangle{}
+	t.Vertices = [3]mgl64.Vec3{v1, v2, v3}
+	return t
 }
 
-func NewTriangle(v1, v2, v3 mgl64.Vec3) *Triangle {
-	return &Triangle{v1, v2, v3}
-}
-
+/*
 func (t *Triangle) Quadric() mgl64.Mat4 {
 	n := t.Normal()
 	x, y, z := t.V1.X(), t.V1.Y(), t.V1.Z()
@@ -28,3 +30,4 @@ func (t *Triangle) Normal() mgl64.Vec3 {
 	e2 := t.V3.Sub(t.V1)
 	return e1.Cross(e2).Normalize()
 }
+*/

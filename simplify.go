@@ -3,6 +3,7 @@ package simplify
 import (
 	"container/heap"
 
+	"github.com/cryptix/stl"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -10,17 +11,17 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	// find distinct vertices
 	vectorVertex := make(map[mgl64.Vec3]*Vertex)
 	for _, t := range input.Triangles {
-		vectorVertex[t.V1] = NewVertex(t.V1)
-		vectorVertex[t.V2] = NewVertex(t.V2)
-		vectorVertex[t.V3] = NewVertex(t.V3)
+		vectorVertex[t.Vertices[0]] = NewVertex(t.Vertices[0])
+		vectorVertex[t.Vertices[1]] = NewVertex(t.Vertices[1])
+		vectorVertex[t.Vertices[2]] = NewVertex(t.Vertices[2])
 	}
 
 	// accumlate quadric matrices for each vertex based on its faces
 	for _, t := range input.Triangles {
 		q := t.Quadric()
-		v1 := vectorVertex[t.V1]
-		v2 := vectorVertex[t.V2]
-		v3 := vectorVertex[t.V3]
+		v1 := vectorVertex[t.Vertices[0]]
+		v2 := vectorVertex[t.Vertices[1]]
+		v3 := vectorVertex[t.Vertices[2]]
 		v1.Quadric = v1.Quadric.Add(q)
 		v2.Quadric = v2.Quadric.Add(q)
 		v3.Quadric = v3.Quadric.Add(q)
@@ -29,9 +30,9 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	// create faces and map vertex => faces
 	vertexFaces := make(map[*Vertex][]*Face)
 	for _, t := range input.Triangles {
-		v1 := vectorVertex[t.V1]
-		v2 := vectorVertex[t.V2]
-		v3 := vectorVertex[t.V3]
+		v1 := vectorVertex[t.Vertices[0]]
+		v2 := vectorVertex[t.Vertices[1]]
+		v3 := vectorVertex[t.Vertices[2]]
 		f := NewFace(v1, v2, v3)
 		vertexFaces[v1] = append(vertexFaces[v1], f)
 		vertexFaces[v2] = append(vertexFaces[v2], f)
@@ -42,9 +43,9 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	// TODO: pair vertices within a threshold distance of each other
 	pairs := make(map[PairKey]*Pair)
 	for _, t := range input.Triangles {
-		v1 := vectorVertex[t.V1]
-		v2 := vectorVertex[t.V2]
-		v3 := vectorVertex[t.V3]
+		v1 := vectorVertex[t.Vertices[0]]
+		v2 := vectorVertex[t.Vertices[1]]
+		v3 := vectorVertex[t.Vertices[2]]
 		pairs[MakePairKey(v1, v2)] = NewPair(v1, v2)
 		pairs[MakePairKey(v2, v3)] = NewPair(v2, v3)
 		pairs[MakePairKey(v3, v1)] = NewPair(v3, v1)
@@ -181,7 +182,7 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	}
 
 	// construct resulting mesh
-	triangles := make([]*Triangle, len(distinctFaces))
+	triangles := make([]stl.Triangle, len(distinctFaces))
 	i := 0
 	for f := range distinctFaces {
 		triangles[i] = NewTriangle(f.V1.Vec3, f.V2.Vec3, f.V3.Vec3)

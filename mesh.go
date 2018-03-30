@@ -1,10 +1,12 @@
 package simplify
 
+import "github.com/cryptix/stl"
+
 type Mesh struct {
-	Triangles []*Triangle
+	Triangles []stl.Triangle
 }
 
-func NewMesh(triangles []*Triangle) *Mesh {
+func NewMesh(triangles []stl.Triangle) *Mesh {
 	return &Mesh{triangles}
 }
 

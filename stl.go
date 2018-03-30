@@ -3,9 +3,11 @@ package simplify
 import (
 	"bufio"
 	"encoding/binary"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/cryptix/stl"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -25,15 +27,20 @@ func LoadBinarySTL(path string) (*Mesh, error) {
 		return nil, err
 	}
 	defer file.Close()
+
+	return ParseBinarySTL(file)
+}
+
+func ParseBinarySTL(r io.Reader) (*Mesh, error) {
 	header := STLHeader{}
-	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &header); err != nil {
 		return nil, err
 	}
 	count := int(header.Count)
-	triangles := make([]*Triangle, count)
+	triangles := make([]stl.Triangle, count)
 	for i := 0; i < count; i++ {
 		d := STLTriangle{}
-		if err := binary.Read(file, binary.LittleEndian, &d); err != nil {
+		if err := binary.Read(r, binary.LittleEndian, &d); err != nil {
 			return nil, err
 		}
 		v1 := mgl64.Vec3{float64(d.V1[0]), float64(d.V1[1]), float64(d.V1[2])}
@@ -56,20 +63,20 @@ func SaveBinarySTL(path string, mesh *Mesh) error {
 		return err
 	}
 	for _, triangle := range mesh.Triangles {
-		n := triangle.Normal()
+		n := triangle.Normal
 		d := STLTriangle{}
 		d.N[0] = float32(n.X())
 		d.N[1] = float32(n.Y())
 		d.N[2] = float32(n.Z())
-		d.V1[0] = float32(triangle.V1.X())
-		d.V1[1] = float32(triangle.V1.Y())
-		d.V1[2] = float32(triangle.V1.Z())
-		d.V2[0] = float32(triangle.V2.X())
-		d.V2[1] = float32(triangle.V2.Y())
-		d.V2[2] = float32(triangle.V2.Z())
-		d.V3[0] = float32(triangle.V3.X())
-		d.V3[1] = float32(triangle.V3.Y())
-		d.V3[2] = float32(triangle.V3.Z())
+		d.V1[0] = float32(triangle.Vertices[0].X())
+		d.V1[1] = float32(triangle.Vertices[0].Y())
+		d.V1[2] = float32(triangle.Vertices[0].Z())
+		d.V2[0] = float32(triangle.Vertices[1].X())
+		d.V2[1] = float32(triangle.Vertices[1].Y())
+		d.V2[2] = float32(triangle.Vertices[1].Z())
+		d.V3[0] = float32(triangle.Vertices[2].X())
+		d.V3[1] = float32(triangle.Vertices[2].Y())
+		d.V3[2] = float32(triangle.Vertices[2].Z())
 		if err := binary.Write(file, binary.LittleEndian, &d); err != nil {
 			return err
 		}
@@ -94,7 +101,7 @@ func LoadSTL(path string) (*Mesh, error) {
 			vertexes = append(vertexes, v)
 		}
 	}
-	var triangles []*Triangle
+	var triangles []stl.Triangle
 	for i := 0; i < len(vertexes); i += 3 {
 		v1 := vertexes[i+0]
 		v2 := vertexes[i+1]
